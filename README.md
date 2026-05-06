@@ -197,6 +197,6 @@ npm test
 | 4. Infrastructure — API Services | ✅ Completo |
 | 5. Application — Orchestrators | ✅ Completo |
 | 6. Infrastructure — Express Routes | ✅ Completo |
-| 7. Nunjucks Views | 🔲 Pendiente |
-| 8. Composition y Entry Point | 🔲 Pendiente |
-| 9. Unit Tests | 🔲 Pendiente |
+| 7. Nunjucks Views | ✅ Completo |
+| 8. Composition y Entry Point | ✅ Completo |
+| 9. Unit Tests | ✅ Completo |
