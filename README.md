@@ -200,3 +200,4 @@ npm test
 | 7. Nunjucks Views | ✅ Completo |
 | 8. Composition y Entry Point | ✅ Completo |
 | 9. Unit Tests | ✅ Completo |
+Evidencia <img width="1834" height="958" alt="image" src="https://github.com/user-attachments/assets/0d0217e7-5c2a-4a62-a0fb-4ab26736137e" />
