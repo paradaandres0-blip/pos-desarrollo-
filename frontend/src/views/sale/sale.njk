@@ -35,30 +35,30 @@
 </div>
 
 {# ── Main grid: items (left) + sidebar (right) ────────── #}
-<div style="display:grid; grid-template-columns:1fr 300px; gap:1.25rem; align-items:start;">
+<div style="display:grid; grid-template-columns:1fr 360px; gap:1.5rem; align-items:start;">
 
   {# ── Items table ──────────────────────────────────────── #}
   <div style="background:var(--dark-2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);">
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:0.85rem 1.25rem; border-bottom:1px solid var(--border); background:var(--dark-3);">
-      <span style="font-size:0.78rem; font-weight:600; color:var(--purple-300); text-transform:uppercase; letter-spacing:0.6px;">📋 Ítems de la Venta</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem 1.5rem; border-bottom:1px solid var(--border); background:var(--dark-3);">
+      <span style="font-size:0.78rem; font-weight:700; color:var(--purple-300); text-transform:uppercase; letter-spacing:1px;">📋 Ítems de la Venta</span>
       <span id="items-count" class="stat-chip" style="font-size:0.75rem;">0 productos</span>
     </div>
-    <div style="overflow-y:auto; max-height:calc(100vh - 280px);">
+    <div style="overflow-y:auto; max-height:calc(100vh - 260px);">
       <table style="margin:0; border-radius:0; border:none; box-shadow:none;">
         <thead style="position:sticky; top:0; z-index:1;">
           <tr>
-            <th style="width:35%;">Producto</th>
-            <th style="width:15%;">Precio</th>
-            <th style="width:18%;">Cantidad</th>
-            <th style="width:18%;">Subtotal</th>
-            <th style="width:14%; text-align:center;">Acción</th>
+            <th style="width:38%; padding:1rem 1.25rem;">Producto</th>
+            <th style="width:16%; padding:1rem 1.25rem;">Precio Unit.</th>
+            <th style="width:18%; padding:1rem 1.25rem;">Cantidad</th>
+            <th style="width:18%; padding:1rem 1.25rem;">Subtotal</th>
+            <th style="width:10%; text-align:center; padding:1rem 1.25rem;">Acción</th>
           </tr>
         </thead>
         <tbody id="items-body">
           <tr>
-            <td colspan="5" class="empty-state" style="padding:3.5rem 1rem;">
-              <div style="font-size:2rem; margin-bottom:0.5rem;">🛒</div>
-              Inicia una venta y agrega productos
+            <td colspan="5" class="empty-state" style="padding:5rem 1rem;">
+              <div style="font-size:3rem; margin-bottom:0.75rem;">🛒</div>
+              <div style="font-size:1rem; font-weight:500; color:var(--text-muted);">Inicia una venta y agrega productos</div>
             </td>
           </tr>
         </tbody>
@@ -71,31 +71,31 @@
 
     {# Resumen #}
     <div class="card" style="margin:0;">
-      <h2 style="margin-bottom:1rem;">💰 Resumen</h2>
-      <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid var(--border);">
-        <span style="color:var(--text-muted); font-size:0.88rem;">Productos</span>
-        <span id="items-count-side" style="font-weight:600; color:var(--white);">0</span>
+      <h2 style="margin-bottom:1.25rem;">💰 Resumen</h2>
+      <div style="display:flex; justify-content:space-between; padding:0.65rem 0; border-bottom:1px solid var(--border);">
+        <span style="color:var(--text-muted); font-size:0.9rem;">Productos</span>
+        <span id="items-count-side" style="font-weight:700; color:var(--white); font-size:0.9rem;">0</span>
       </div>
-      <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid var(--border);">
-        <span style="color:var(--text-muted); font-size:0.88rem;">Subtotal</span>
-        <span style="font-weight:600; color:var(--white);">$<span id="sale-subtotal">0.00</span></span>
+      <div style="display:flex; justify-content:space-between; padding:0.65rem 0; border-bottom:1px solid var(--border);">
+        <span style="color:var(--text-muted); font-size:0.9rem;">Subtotal</span>
+        <span style="font-weight:700; color:var(--white); font-size:0.9rem;">$<span id="sale-subtotal">0.00</span></span>
       </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:0.85rem 0 0.25rem;">
-        <span style="font-size:0.95rem; font-weight:700; color:var(--text-muted);">TOTAL</span>
-        <span style="font-size:1.75rem; font-weight:800; color:var(--purple-300); letter-spacing:-1px;">$<span id="sale-total">0.00</span></span>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem 0 0.25rem;">
+        <span style="font-size:1rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">TOTAL</span>
+        <span style="font-size:2.2rem; font-weight:900; color:var(--purple-300); letter-spacing:-2px; line-height:1;">$<span id="sale-total">0.00</span></span>
       </div>
     </div>
 
     {# Payment form #}
     <div class="card" id="payment-section" style="margin:0; display:none;">
-      <h2 style="margin-bottom:1rem;">💳 Pago</h2>
+      <h2 style="margin-bottom:1.25rem;">💳 Pago</h2>
       <div id="payment-error" class="alert alert-error" style="display:none; margin-bottom:0.75rem;"></div>
       <div class="form-group">
-        <label for="payment-method">Método</label>
+        <label for="payment-method">Método de pago</label>
         <select id="payment-method">
           <option value="CASH">💵 Efectivo</option>
-          <option value="CREDIT_CARD">💳 Crédito</option>
-          <option value="DEBIT_CARD">🏦 Débito</option>
+          <option value="CREDIT_CARD">💳 Tarjeta de Crédito</option>
+          <option value="DEBIT_CARD">🏦 Tarjeta de Débito</option>
         </select>
       </div>
       <div class="form-group">
@@ -103,13 +103,13 @@
         <input type="number" id="payment-amount" min="0" step="0.01" placeholder="0.00" oninput="calcChange()">
       </div>
       <div id="change-display" style="display:none; margin-bottom:0.75rem;">
-        <div class="change-box" style="width:100%; text-align:center; font-size:1rem;">
+        <div class="change-box" style="width:100%; text-align:center; font-size:1.1rem; padding:0.85rem;">
           ✅ Cambio: $<span id="change-amount">0.00</span>
         </div>
       </div>
       <div style="display:flex; gap:0.5rem;">
-        <button class="btn btn-success" onclick="processPay()" style="flex:1; justify-content:center;">Confirmar</button>
-        <button class="btn btn-secondary" onclick="cancelPayment()" style="padding:0.5rem 0.75rem;">✕</button>
+        <button class="btn btn-success" onclick="processPay()" style="flex:1; justify-content:center; padding:0.65rem;">✓ Confirmar Pago</button>
+        <button class="btn btn-secondary" onclick="cancelPayment()" style="padding:0.65rem 0.85rem;">✕</button>
       </div>
     </div>
 
