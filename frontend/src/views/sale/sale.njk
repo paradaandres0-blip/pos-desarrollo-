@@ -1,73 +1,101 @@
 {% extends "layout.njk" %}
 
 {% block content %}
-<h1>Pantalla de Venta</h1>
+<h1>🧾 Pantalla de Venta</h1>
 
 <div id="sale-error" class="alert alert-error" style="display:none;"></div>
 
-<div class="card">
-  <h2>Buscar Producto</h2>
-  <div class="form-row">
-    <div class="form-group" style="flex:2">
-      <label for="product-search">Codigo o nombre del producto</label>
-      <input type="text" id="product-search" placeholder="Ej: PROD-001" autocomplete="off">
-    </div>
-    <div class="form-group" style="align-self:flex-end">
-      <button class="btn btn-primary" onclick="searchProduct()">Agregar</button>
-    </div>
-  </div>
+<div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; align-items:center;">
+  <button class="btn btn-primary" id="btn-start" onclick="startSale()">＋ Nueva Venta</button>
+  <button class="btn btn-success" id="btn-pay" onclick="showPayment()" style="display:none;">💳 Ir a Pagar</button>
+  <span id="sale-status-chip" style="display:none;" class="stat-chip">🟢 Venta activa</span>
 </div>
 
-<div class="card">
-  <h2>Items de la Venta</h2>
-  <table id="items-table">
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th>Precio Unit.</th>
-        <th>Cantidad</th>
-        <th>Subtotal</th>
-        <th>Accion</th>
-      </tr>
-    </thead>
-    <tbody id="items-body">
-      <tr id="empty-row"><td colspan="5" style="text-align:center;color:#999;">Sin items. Inicia una venta y busca productos.</td></tr>
-    </tbody>
-  </table>
-  <div class="total-box" style="text-align:right; margin-top:1rem;">
-    Total: $<span id="sale-total">0.00</span>
-  </div>
-</div>
+<div style="display:grid; grid-template-columns:1fr 340px; gap:1.5rem; align-items:start;">
 
-<div class="card" id="payment-section" style="display:none;">
-  <h2>Pago</h2>
-  <div id="payment-error" class="alert alert-error" style="display:none;"></div>
-  <div class="form-row">
-    <div class="form-group">
-      <label for="payment-method">Metodo de pago</label>
-      <select id="payment-method">
-        <option value="CASH">Efectivo</option>
-        <option value="CREDIT_CARD">Tarjeta de Credito</option>
-        <option value="DEBIT_CARD">Tarjeta de Debito</option>
-      </select>
+  <!-- Left column -->
+  <div>
+    <div class="card">
+      <h2>🔍 Buscar Producto</h2>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label for="product-search">Código o nombre</label>
+          <input type="text" id="product-search" placeholder="Ej: PROD-001 o Café..." autocomplete="off"
+            onkeydown="if(event.key==='Enter') searchProduct()">
+        </div>
+        <div class="form-group" style="align-self:flex-end; flex:0">
+          <button class="btn btn-primary" onclick="searchProduct()">Agregar</button>
+        </div>
+      </div>
     </div>
-    <div class="form-group">
-      <label for="payment-amount">Monto recibido ($)</label>
-      <input type="number" id="payment-amount" min="0" step="0.01" placeholder="0.00" oninput="calcChange()">
-    </div>
-  </div>
-  <div class="change-box" id="change-display" style="display:none;">
-    Cambio: $<span id="change-amount">0.00</span>
-  </div>
-  <div style="display:flex; gap:0.75rem; margin-top:1rem;">
-    <button class="btn btn-success" onclick="processPay()">Confirmar Pago</button>
-    <button class="btn btn-secondary" onclick="cancelPayment()">Cancelar</button>
-  </div>
-</div>
 
-<div style="display:flex; gap:0.75rem; margin-top:1rem;">
-  <button class="btn btn-primary" id="btn-start" onclick="startSale()">Nueva Venta</button>
-  <button class="btn btn-success" id="btn-pay" onclick="showPayment()" style="display:none;">Ir a Pagar</button>
+    <div class="card" style="padding:0; overflow:hidden;">
+      <div style="padding:1rem 1.5rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0;">📋 Ítems de la Venta</h2>
+        <span id="items-count" class="stat-chip">0 productos</span>
+      </div>
+      <table id="items-table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Precio Unit.</th>
+            <th>Cantidad</th>
+            <th>Subtotal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="items-body">
+          <tr>
+            <td colspan="5" class="empty-state">
+              Inicia una venta y agrega productos para comenzar
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right column: summary + payment -->
+  <div>
+    <div class="card">
+      <h2>💰 Resumen</h2>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border); margin-bottom:0.75rem;">
+        <span style="color:var(--text-muted); font-size:0.9rem;">Subtotal</span>
+        <span style="font-weight:600;">$<span id="sale-subtotal">0.00</span></span>
+      </div>
+      <div class="total-box" style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:1rem; color:var(--text-muted);">TOTAL</span>
+        <span>$<span id="sale-total">0.00</span></span>
+      </div>
+    </div>
+
+    <div class="card" id="payment-section" style="display:none;">
+      <h2>💳 Pago</h2>
+      <div id="payment-error" class="alert alert-error" style="display:none;"></div>
+      <div class="form-group">
+        <label for="payment-method">Método de pago</label>
+        <select id="payment-method">
+          <option value="CASH">💵 Efectivo</option>
+          <option value="CREDIT_CARD">💳 Tarjeta de Crédito</option>
+          <option value="DEBIT_CARD">🏦 Tarjeta de Débito</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="payment-amount">Monto recibido ($)</label>
+        <input type="number" id="payment-amount" min="0" step="0.01" placeholder="0.00" oninput="calcChange()">
+      </div>
+      <div id="change-display" style="display:none; margin-bottom:1rem;">
+        <div class="change-box" style="width:100%; text-align:center;">
+          ✅ Cambio: $<span id="change-amount">0.00</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn btn-success" onclick="processPay()" style="flex:1;">Confirmar Pago</button>
+        <button class="btn btn-secondary" onclick="cancelPayment()">✕</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -76,8 +104,8 @@
 
   function showError(msg) {
     var el = document.getElementById('sale-error');
-    el.textContent = msg;
-    el.style.display = 'block';
+    el.innerHTML = '⚠️ ' + msg;
+    el.style.display = 'flex';
   }
   function clearError() {
     document.getElementById('sale-error').style.display = 'none';
@@ -91,8 +119,9 @@
       if (!res.ok) { showError(data.error || 'Error al iniciar la venta.'); return; }
       currentSaleId = data.id;
       saleItems = data.items || [];
-      document.getElementById('btn-start').textContent = 'Reiniciar Venta';
-      document.getElementById('btn-pay').style.display = 'inline-block';
+      document.getElementById('btn-start').innerHTML = '🔄 Reiniciar';
+      document.getElementById('btn-pay').style.display = 'inline-flex';
+      document.getElementById('sale-status-chip').style.display = 'inline-flex';
       renderItems();
     } catch (e) { showError('Error al iniciar la venta.'); }
   }
@@ -118,19 +147,23 @@
 
   function renderItems() {
     var tbody = document.getElementById('items-body');
+    var count = document.getElementById('items-count');
     if (!saleItems || saleItems.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">Sin items.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Sin ítems en la venta</td></tr>';
+      count.textContent = '0 productos';
       document.getElementById('sale-total').textContent = '0.00';
+      document.getElementById('sale-subtotal').textContent = '0.00';
       return;
     }
+    count.textContent = saleItems.length + ' producto' + (saleItems.length !== 1 ? 's' : '');
     tbody.innerHTML = saleItems.map(function(item, idx) {
       var subtotal = parseFloat(item.subtotal || (parseFloat(item.price || 0) * parseInt(item.quantity || 1)));
       return '<tr>' +
-        '<td>' + (item.productName || item.productId) + '</td>' +
-        '<td>$' + parseFloat(item.price || 0).toFixed(2) + '</td>' +
-        '<td><input type="number" min="1" value="' + item.quantity + '" style="width:70px;padding:0.3rem;" onchange="updateQty(' + idx + ', this.value)"></td>' +
-        '<td id="subtotal-' + idx + '">$' + subtotal.toFixed(2) + '</td>' +
-        '<td><button class="btn btn-danger" onclick="removeItem(' + idx + ')">X</button></td>' +
+        '<td><strong>' + (item.productName || item.productId) + '</strong></td>' +
+        '<td style="color:var(--purple-300);">$' + parseFloat(item.price || 0).toFixed(2) + '</td>' +
+        '<td><input type="number" min="1" value="' + item.quantity + '" style="width:72px;padding:0.35rem 0.5rem;background:var(--dark-3);border:1px solid var(--gray-1);border-radius:6px;color:var(--white);font-family:inherit;" onchange="updateQty(' + idx + ', this.value)"></td>' +
+        '<td id="subtotal-' + idx + '" style="font-weight:600;">$' + subtotal.toFixed(2) + '</td>' +
+        '<td><button class="btn btn-danger" style="padding:0.3rem 0.6rem;font-size:0.8rem;" onclick="removeItem(' + idx + ')">✕</button></td>' +
         '</tr>';
     }).join('');
     recalcTotal();
@@ -152,11 +185,13 @@
   function recalcTotal() {
     var total = saleItems.reduce(function(sum, item) { return sum + parseFloat(item.subtotal || 0); }, 0);
     document.getElementById('sale-total').textContent = total.toFixed(2);
+    document.getElementById('sale-subtotal').textContent = total.toFixed(2);
   }
 
   function showPayment() {
     if (!currentSaleId || saleItems.length === 0) { showError('Agrega productos antes de pagar.'); return; }
     document.getElementById('payment-section').style.display = 'block';
+    document.getElementById('payment-section').scrollIntoView({ behavior: 'smooth' });
   }
 
   function calcChange() {
@@ -177,8 +212,8 @@
     var total = parseFloat(document.getElementById('sale-total').textContent);
     var errEl = document.getElementById('payment-error');
     errEl.style.display = 'none';
-    if (!amount || amount <= 0) { errEl.textContent = 'Ingresa un monto valido.'; errEl.style.display = 'block'; return; }
-    if (amount < total) { errEl.textContent = 'Monto insuficiente. Total: $' + total.toFixed(2); errEl.style.display = 'block'; return; }
+    if (!amount || amount <= 0) { errEl.innerHTML = '⚠️ Ingresa un monto válido.'; errEl.style.display = 'flex'; return; }
+    if (amount < total) { errEl.innerHTML = '⚠️ Monto insuficiente. Total: $' + total.toFixed(2); errEl.style.display = 'flex'; return; }
     try {
       var res = await fetch('/sale/' + currentSaleId + '/pay', {
         method: 'POST',
@@ -186,11 +221,11 @@
         body: JSON.stringify({ method: method, amount: amount })
       });
       var data = await res.json();
-      if (!res.ok) { errEl.textContent = data.error || 'Error al procesar el pago.'; errEl.style.display = 'block'; return; }
+      if (!res.ok) { errEl.innerHTML = '⚠️ ' + (data.error || 'Error al procesar el pago.'); errEl.style.display = 'flex'; return; }
       var change = (data.change !== undefined) ? data.change : (amount - total);
-      alert('Pago exitoso! Cambio: $' + parseFloat(change).toFixed(2));
+      alert('✅ Pago exitoso!\nCambio: $' + parseFloat(change).toFixed(2));
       resetSale();
-    } catch (e) { errEl.textContent = 'Error al procesar el pago.'; errEl.style.display = 'block'; }
+    } catch (e) { errEl.innerHTML = '⚠️ Error al procesar el pago.'; errEl.style.display = 'flex'; }
   }
 
   function cancelPayment() {
@@ -203,7 +238,8 @@
     renderItems();
     document.getElementById('payment-section').style.display = 'none';
     document.getElementById('btn-pay').style.display = 'none';
-    document.getElementById('btn-start').textContent = 'Nueva Venta';
+    document.getElementById('btn-start').innerHTML = '＋ Nueva Venta';
+    document.getElementById('sale-status-chip').style.display = 'none';
     document.getElementById('payment-amount').value = '';
     document.getElementById('change-display').style.display = 'none';
     clearError();
