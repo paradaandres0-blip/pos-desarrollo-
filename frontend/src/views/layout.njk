@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POS System</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f4f6f9;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    /* ── Navigation ── */
+    nav {
+      background: #1a1a2e;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,.35);
+    }
+
+    nav .brand {
+      color: #e0e0e0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      padding: 1rem 1.5rem 1rem 0;
+      border-right: 1px solid #333;
+      margin-right: 1rem;
+    }
+
+    nav a {
+      color: #b0b8cc;
+      text-decoration: none;
+      padding: .9rem 1.1rem;
+      font-size: .95rem;
+      font-weight: 500;
+      transition: background .15s, color .15s;
+      border-radius: 4px;
+    }
+
+    nav a:hover,
+    nav a.active {
+      background: #16213e;
+      color: #fff;
+    }
+
+    /* ── Main content ── */
+    main {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.1);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #1a1a2e;
+      border-bottom: 2px solid #e8ecf0;
+      padding-bottom: .5rem;
+    }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .9rem;
+    }
+
+    th {
+      background: #f0f2f5;
+      text-align: left;
+      padding: .6rem .8rem;
+      font-weight: 600;
+      color: #555;
+      border-bottom: 2px solid #dde1e7;
+    }
+
+    td {
+      padding: .55rem .8rem;
+      border-bottom: 1px solid #eaecef;
+      vertical-align: middle;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafbfc; }
+
+    /* ── Stock indicators ── */
+    tr.low-stock td    { background: #fff9c4; }
+    tr.low-stock:hover td { background: #fff59d; }
+    tr.out-of-stock td { background: #ffcdd2; }
+    tr.out-of-stock:hover td { background: #ef9a9a; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-block;
+      padding: .45rem .9rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: .875rem;
+      font-weight: 500;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-primary   { background: #1a73e8; color: #fff; }
+    .btn-success   { background: #34a853; color: #fff; }
+    .btn-danger    { background: #ea4335; color: #fff; }
+    .btn-secondary { background: #6c757d; color: #fff; }
+    .btn-warning   { background: #fbbc04; color: #333; }
+    .btn-sm { padding: .3rem .65rem; font-size: .8rem; }
+
+    /* ── Forms ── */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-size: .85rem;
+      font-weight: 500;
+      margin-bottom: .3rem;
+      color: #555;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: .5rem .75rem;
+      border: 1px solid #ced4da;
+      border-radius: 5px;
+      font-size: .9rem;
+      transition: border-color .15s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #1a73e8;
+      box-shadow: 0 0 0 3px rgba(26,115,232,.15);
+    }
+
+    input:invalid { border-color: #ea4335; }
+
+    /* ── Alerts ── */
+    .alert {
+      padding: .75rem 1rem;
+      border-radius: 5px;
+      margin-bottom: 1rem;
+      font-size: .9rem;
+    }
+    .alert-danger  { background: #fdecea; color: #c62828; border: 1px solid #f5c6cb; }
+    .alert-success { background: #e6f4ea; color: #1e7e34; border: 1px solid #c3e6cb; }
+    .alert-info    { background: #e8f0fe; color: #1a73e8; border: 1px solid #b8d0fb; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1.75rem;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.2);
+    }
+
+    .modal h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      color: #1a1a2e;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: .75rem;
+      margin-top: 1.25rem;
+    }
+
+    /* ── Utilities ── */
+    .flex { display: flex; }
+    .gap-1 { gap: .5rem; }
+    .gap-2 { gap: 1rem; }
+    .align-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .mt-1 { margin-top: .5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .text-muted { color: #888; font-size: .85rem; }
+    .fw-bold { font-weight: 700; }
+    .fs-lg { font-size: 1.25rem; }
+    .hidden { display: none !important; }
+    .w-auto { width: auto; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <span class="brand">&#128722; POS</span>
+    <a href="/sale"      {% if activePage == 'sale'      %}class="active"{% endif %}>Sale</a>
+    <a href="/inventory" {% if activePage == 'inventory' %}class="active"{% endif %}>Inventory</a>
+    <a href="/reports"   {% if activePage == 'reports'   %}class="active"{% endif %}>Reports</a>
+  </nav>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+</body>
+</html>

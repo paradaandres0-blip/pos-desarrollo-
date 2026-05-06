@@ -1,0 +1,439 @@
+{% extends "layout.njk" %}
+{% set activePage = 'sale' %}
+
+{% block content %}
+
+<!-- Error banner (server-side) -->
+{% if error %}
+<div class="alert alert-danger" id="server-error">{{ error }}</div>
+{% endif %}
+
+<!-- ── Product Search ── -->
+<div class="card">
+  <h2>Product Search</h2>
+  <div class="flex gap-2 align-center">
+    <input
+      type="text"
+      id="search-input"
+      placeholder="Search by code or name…"
+      style="max-width:360px;"
+      autocomplete="off"
+    />
+    <button class="btn btn-primary w-auto" id="search-btn">Search</button>
+  </div>
+
+  <!-- Search results dropdown -->
+  <div id="search-results" class="hidden mt-1" style="max-width:360px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="search-results-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Sale Items ── -->
+<div class="card">
+  <div class="flex justify-between align-center" style="margin-bottom:.75rem;">
+    <h2 style="margin-bottom:0;border:none;">Sale Items</h2>
+    <span id="sale-id-display" class="text-muted"></span>
+  </div>
+
+  <table id="items-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Unit Price</th>
+        <th style="width:110px;">Quantity</th>
+        <th class="text-right">Subtotal</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="items-body">
+      <tr id="empty-row">
+        <td colspan="5" class="text-center text-muted" style="padding:1.5rem 0;">
+          No items added yet. Search for a product above.
+        </td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3" class="text-right fw-bold" style="padding:.75rem .8rem;">Total</td>
+        <td class="text-right fw-bold fs-lg" id="sale-total" style="padding:.75rem .8rem;">$0.00</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<!-- ── Payment ── -->
+<div class="card" id="payment-card">
+  <h2>Payment</h2>
+
+  <!-- JS error area -->
+  <div id="error-area" class="alert alert-danger hidden"></div>
+  <!-- Success / change area -->
+  <div id="success-area" class="alert alert-success hidden"></div>
+
+  <form id="payment-form" novalidate>
+    <div class="flex gap-2" style="flex-wrap:wrap;">
+      <div class="form-group" style="flex:1;min-width:180px;">
+        <label for="payment-method">Payment Method</label>
+        <select id="payment-method" required>
+          <option value="">— Select —</option>
+          <option value="CASH">Cash</option>
+          <option value="CREDIT_CARD">Credit Card</option>
+          <option value="DEBIT_CARD">Debit Card</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="flex:1;min-width:180px;">
+        <label for="payment-amount">Amount Received</label>
+        <input
+          type="number"
+          id="payment-amount"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
+          required
+        />
+      </div>
+
+      <div class="form-group" style="flex:1;min-width:180px;">
+        <label>Change</label>
+        <div
+          id="change-display"
+          style="
+            padding:.5rem .75rem;
+            border:1px solid #ced4da;
+            border-radius:5px;
+            background:#f8f9fa;
+            font-size:.9rem;
+            min-height:2.25rem;
+          "
+        >—</div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-success" id="pay-btn" disabled>
+      Process Payment
+    </button>
+  </form>
+</div>
+
+<!-- ── Inline JavaScript ── -->
+<script>
+(function () {
+  'use strict';
+
+  /* ── State ── */
+  let saleId   = null;
+  let saleItems = [];   // { productId, productName, price, quantity, subtotal }
+
+  /* ── Helpers ── */
+  const fmt = (n) => '$' + Number(n).toFixed(2);
+
+  function showError(msg) {
+    const el = document.getElementById('error-area');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    document.getElementById('success-area').classList.add('hidden');
+  }
+
+  function clearError() {
+    document.getElementById('error-area').classList.add('hidden');
+  }
+
+  function showSuccess(msg) {
+    const el = document.getElementById('success-area');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    document.getElementById('error-area').classList.add('hidden');
+  }
+
+  /* ── Recalculate totals ── */
+  function recalculate() {
+    let total = 0;
+    saleItems.forEach(item => {
+      item.subtotal = item.price * item.quantity;
+      total += item.subtotal;
+    });
+    document.getElementById('sale-total').textContent = fmt(total);
+    updateChangeDisplay();
+    renderItems();
+  }
+
+  /* ── Render items table ── */
+  function renderItems() {
+    const tbody = document.getElementById('items-body');
+    const emptyRow = document.getElementById('empty-row');
+
+    if (saleItems.length === 0) {
+      tbody.innerHTML = '';
+      tbody.appendChild(emptyRow);
+      emptyRow.classList.remove('hidden');
+      document.getElementById('pay-btn').disabled = true;
+      return;
+    }
+
+    emptyRow.classList.add('hidden');
+    tbody.innerHTML = '';
+
+    saleItems.forEach((item, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escHtml(item.productName)}</td>
+        <td>${fmt(item.price)}</td>
+        <td>
+          <input
+            type="number"
+            class="qty-input"
+            data-idx="${idx}"
+            value="${item.quantity}"
+            min="1"
+            step="1"
+            style="width:80px;"
+          />
+        </td>
+        <td class="text-right subtotal-cell">${fmt(item.subtotal)}</td>
+        <td>
+          <button class="btn btn-danger btn-sm remove-btn" data-idx="${idx}">✕</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('pay-btn').disabled = saleItems.length === 0;
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* ── Change display ── */
+  function updateChangeDisplay() {
+    const amountVal = parseFloat(document.getElementById('payment-amount').value);
+    const totalVal  = saleItems.reduce((s, i) => s + i.subtotal, 0);
+    const display   = document.getElementById('change-display');
+
+    if (!isNaN(amountVal) && amountVal >= 0) {
+      const change = amountVal - totalVal;
+      display.textContent = fmt(change);
+      display.style.color = change < 0 ? '#c62828' : '#1e7e34';
+    } else {
+      display.textContent = '—';
+      display.style.color = '';
+    }
+  }
+
+  /* ── Start a new sale ── */
+  async function startSale() {
+    try {
+      const res = await fetch('/sale/start', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not start sale');
+      saleId = data.id;
+      document.getElementById('sale-id-display').textContent = 'Sale #' + saleId;
+    } catch (err) {
+      showError('Failed to start sale: ' + err.message);
+    }
+  }
+
+  /* ── Search products ── */
+  async function searchProducts(query) {
+    if (!query.trim()) return;
+    try {
+      const res  = await fetch('/api/v1/products?search=' + encodeURIComponent(query.trim()));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Search failed');
+      renderSearchResults(Array.isArray(data) ? data : (data.data || []));
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  function renderSearchResults(products) {
+    const container = document.getElementById('search-results');
+    const tbody     = document.getElementById('search-results-body');
+    tbody.innerHTML = '';
+
+    if (products.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No products found.</td></tr>';
+    } else {
+      products.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.innerHTML = `
+          <td>${escHtml(p.code)}</td>
+          <td>${escHtml(p.name)}</td>
+          <td>${fmt(p.price)}</td>
+          <td>${p.stockLevel ?? p.stock_level ?? '—'}</td>
+          <td><button class="btn btn-primary btn-sm add-product-btn" data-id="${escHtml(p.id)}" data-name="${escHtml(p.name)}" data-price="${p.price}">Add</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    container.classList.remove('hidden');
+  }
+
+  /* ── Add product to sale ── */
+  async function addProduct(productId, productName, price) {
+    if (!saleId) {
+      showError('No active sale. Please refresh the page.');
+      return;
+    }
+    clearError();
+
+    // Check if already in list — just increment quantity
+    const existing = saleItems.find(i => i.productId === productId);
+    if (existing) {
+      existing.quantity += 1;
+      recalculate();
+      // Sync with backend
+      await syncItem(productId, existing.quantity);
+      return;
+    }
+
+    try {
+      const res  = await fetch(`/sale/${saleId}/item`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity: 1 }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not add product');
+
+      saleItems.push({ productId, productName, price: parseFloat(price), quantity: 1, subtotal: parseFloat(price) });
+      recalculate();
+
+      // Hide search results
+      document.getElementById('search-results').classList.add('hidden');
+      document.getElementById('search-input').value = '';
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  /* ── Sync quantity change with backend ── */
+  async function syncItem(productId, quantity) {
+    if (!saleId) return;
+    try {
+      const res  = await fetch(`/sale/${saleId}/item`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not update item');
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  /* ── Process payment ── */
+  async function processPayment(method, amount) {
+    if (!saleId) { showError('No active sale.'); return; }
+    try {
+      const res  = await fetch(`/sale/${saleId}/pay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method, amount: parseFloat(amount) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Payment failed');
+
+      const change = data.change !== undefined ? data.change : (parseFloat(amount) - saleItems.reduce((s,i)=>s+i.subtotal,0));
+      showSuccess(`Payment successful! Change: ${fmt(change)}`);
+      resetSale();
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  /* ── Reset after successful payment ── */
+  function resetSale() {
+    saleItems = [];
+    recalculate();
+    document.getElementById('payment-method').value = '';
+    document.getElementById('payment-amount').value = '';
+    document.getElementById('change-display').textContent = '—';
+    document.getElementById('change-display').style.color = '';
+    document.getElementById('sale-id-display').textContent = '';
+    startSale();
+  }
+
+  /* ── Event: quantity change ── */
+  document.getElementById('items-body').addEventListener('input', (e) => {
+    if (!e.target.classList.contains('qty-input')) return;
+    const idx = parseInt(e.target.dataset.idx, 10);
+    const qty = parseInt(e.target.value, 10);
+    if (isNaN(qty) || qty < 1) return;
+    saleItems[idx].quantity = qty;
+    recalculate();
+    syncItem(saleItems[idx].productId, qty);
+  });
+
+  /* ── Event: remove item ── */
+  document.getElementById('items-body').addEventListener('click', (e) => {
+    if (!e.target.classList.contains('remove-btn')) return;
+    const idx = parseInt(e.target.dataset.idx, 10);
+    saleItems.splice(idx, 1);
+    recalculate();
+  });
+
+  /* ── Event: search button ── */
+  document.getElementById('search-btn').addEventListener('click', () => {
+    searchProducts(document.getElementById('search-input').value);
+  });
+
+  document.getElementById('search-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchProducts(e.target.value);
+  });
+
+  /* ── Event: add product from search results ── */
+  document.getElementById('search-results-body').addEventListener('click', (e) => {
+    const btn = e.target.closest('.add-product-btn');
+    if (!btn) return;
+    addProduct(btn.dataset.id, btn.dataset.name, btn.dataset.price);
+  });
+
+  /* ── Event: amount input → update change ── */
+  document.getElementById('payment-amount').addEventListener('input', updateChangeDisplay);
+
+  /* ── Event: payment form submit ── */
+  document.getElementById('payment-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const method = document.getElementById('payment-method').value;
+    const amount = document.getElementById('payment-amount').value;
+
+    if (!method) { showError('Please select a payment method.'); return; }
+    if (!amount || parseFloat(amount) <= 0) { showError('Please enter a valid amount.'); return; }
+
+    const total = saleItems.reduce((s, i) => s + i.subtotal, 0);
+    if (parseFloat(amount) < total) {
+      showError(`Amount received (${fmt(amount)}) is less than the total (${fmt(total)}).`);
+      return;
+    }
+
+    processPayment(method, amount);
+  });
+
+  /* ── Init ── */
+  startSale();
+
+})();
+</script>
+
+{% endblock %}
